@@ -1,0 +1,11 @@
+{
+	"id": "aerosol-plugin",
+	"name": "Aerosol",
+	"version": "0.1.0",
+	"minAppVersion": "0.15.0",
+	"description": "FOSS Selfhosted Vaul Sync & Backup",
+	"author": "Akira Pinemoon",
+	"authorUrl": "https://github.com/AkiraPinemoon/Aerosol",
+	"fundingUrl": "",
+	"isDesktopOnly": false
+}
