@@ -1,0 +1,171 @@
+openapi: 3.1.0
+info:
+  title: Aerosol API Specification - OpenAPI 3.1
+  description: |-
+    This is the API implemented by any valid Aerosol server based on the OpenAPI 3.1 specification.
+
+  license:
+    name: MIT
+    url: https://github.com/AkiraPinemoon/Aerosol/blob/main/LICENSE
+  version: 0.1.0
+
+paths:
+  /file:
+    get:
+      summary: Downloads a file from the server
+      description: Downloads a file from the server by filename
+      parameters:
+        - name: filename
+          in: query
+          description: The path of the requested file relative to the Vaul root
+          required: true
+          explode: true
+          schema:
+            type: string
+      security:
+        - bearerAuth:
+      responses:
+        "200":
+          description: Successful operation
+        "401":
+          description: Unauthorized
+        "404":
+          description: File not present on the server
+
+    post:
+      summary: Called when a file has been created or changed on the client
+      description: Uploads the new file to the server
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/File"
+        required: true
+      security:
+        - bearerAuth:
+      responses:
+        "200":
+          description: Successful operation
+        "401":
+          description: Unauthorized
+
+    delete:
+      summary: Deletes a file from the server
+      description: Deletes the specified file from the server
+      parameters:
+        - name: filename
+          in: query
+          description: The path of the requested file relative to the Vaul root
+          required: true
+          explode: true
+          schema:
+            type: string
+      security:
+        - bearerAuth:
+      responses:
+        "200":
+          description: Successful operation
+        "401":
+          description: Unauthorized
+        "404":
+          description: File not present on the server
+
+    patch:
+      summary: Renames a file on the server
+      description: Renames a file from filename to newFilename
+      parameters:
+        - name: filename
+          in: query
+          description: The current path of the requested file relative to the Vaul root
+          required: true
+          explode: true
+          schema:
+            type: string
+        - name: newFilename
+          in: query
+          description: The new path of the requested file relative to the Vaul root
+          required: true
+          explode: true
+          schema:
+            type: string
+      security:
+        - bearerAuth:
+      responses:
+        "200":
+          description: Successful operation
+        "401":
+          description: Unauthorized
+        "404":
+          description: File not present on the server
+  /checksum:
+    get:
+      summary: Query server for a file or vault checksum
+      description: Query server for a file or vault checksum. If filename is present the files checksum is returned, otherwise the Vault checksum
+      parameters:
+        - name: filename
+          in: query
+          description: The path of the requested file relative to the Vaul root
+          required: false
+          explode: true
+          schema:
+            type: string
+      security:
+        - bearerAuth:
+      responses:
+        "200":
+          description: Successful operation
+        "401":
+          description: Unauthorized
+        "404":
+          description: File not present on the server
+
+  /user:
+    post:
+      summary: Registers a new user
+      description: Registers a new user on the server (and their passkey) using a registration token returning a jwt
+      requestBody:
+        content:
+          application/json:
+            schema:
+              required:
+                - token
+                - username
+              type: object
+              properties:
+                token:
+                  type: string
+                username:
+                  type: string
+        required: true
+      responses:
+        "200":
+          description: Successful operation
+        "401":
+          description: registration token is invalid
+
+    get:
+      summary: Login as a user
+      description: Login using passkey returning a jwt
+      responses:
+        "200":
+          description: Successful operation
+        "401":
+          description: Unauthorized
+
+components:
+  schemas:
+    File:
+      required:
+        - filename
+        - contents
+      type: object
+      properties:
+        filename:
+          type: string
+        contents:
+          type: string
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
