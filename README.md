@@ -1,6 +1,5 @@
 # <img src="https://github.com/user-attachments/assets/bed6d49a-9106-46ae-ad35-8a5cc9301e0c" width="28"> Aerosol - Obsidian FOSS Sync Server + Plugin
-A plugin for Obsidian, that allows for decentralized syncing of vaults on self-hosted servers. Created for an assignment at ITECH in the timeframe of two weeks.
-
+A server and plugin for Obsidian, that allows for syncing of vaults with self-hosted servers.
 
 ---
 
@@ -19,13 +18,6 @@ TBD
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more information.
 
 ---
-
-## Team
-- Paul
-- Levin
-- Justin
-- Doran
-- Peter
 
 ## Todo
 - [ ] Everyone Knows Git
