@@ -1,5 +1,6 @@
-# ☁️ Aerosol - Obsidian FOSS Sync Server + Plugin
+# <img src="https://github.com/user-attachments/assets/bed6d49a-9106-46ae-ad35-8a5cc9301e0c" width="28"> Aerosol - Obsidian FOSS Sync Server + Plugin
 A plugin for Obsidian, that allows for decentralized syncing of vaults on self-hosted servers. Created for an assignment at ITECH in the timeframe of two weeks.
+
 
 ---
 
