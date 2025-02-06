@@ -1,3 +1,5 @@
+import * as api from "src/api"
+
 import {
 	App,
 	ButtonComponent,
