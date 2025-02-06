@@ -1,4 +1,3 @@
-import * as EventEmitter from "events";
 import {
 	App,
 	ButtonComponent,
@@ -13,8 +12,6 @@ import {
 	Setting,
 	TextComponent,
 } from "obsidian";
-
-// Remember to rename these classes and interfaces!
 
 interface AerosolSettings {
 	connected: boolean;
@@ -66,7 +63,6 @@ export default class Aerosol extends Plugin {
 			})
 		);
 
-		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new AerosolSettingTab(this.app, this));
 
 		this.events.trigger("settings-changed");
