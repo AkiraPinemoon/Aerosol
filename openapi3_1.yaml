@@ -133,7 +133,7 @@ paths:
         "404":
           description: File not present on the server
 
-  /register:
+  /user:
     post:
       summary: Registers a new user
       description: Registers a new user on the server (and their passkey) using a registration token returning a jwt
