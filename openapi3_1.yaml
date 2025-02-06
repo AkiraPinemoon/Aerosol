@@ -162,7 +162,7 @@ paths:
           description: registration token is invalid
 
     get:
-      summary: Login
+      summary: Renew Access JWT
       description: Generate a new Acces JWT using the refresh JWT
       security:
         - refreshBearer:
@@ -172,6 +172,13 @@ paths:
           headers:
             Authorization:
               $ref: "#/components/headers/JWT"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  expiresIn:
+                    type: number
         "401":
           description: registration token is invalid
 
