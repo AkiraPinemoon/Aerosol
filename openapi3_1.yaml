@@ -32,7 +32,7 @@ paths:
         "404":
           description: File not present on the server
 
-    post:
+    put:
       summary: Called when a file has been created or changed on the client
       description: Uploads the new file to the server
       requestBody:
