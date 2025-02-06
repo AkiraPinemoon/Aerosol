@@ -22,4 +22,10 @@ jobs:
         run: npm ci  # Ensures a clean install
 
       - name: Run ESLint
-        run: npx eslint . --ext .js,.ts --max-warnings=0
+        run: npx eslint .
+
+      - name: Install Yamllint
+        run: sudo apt-get install -y yamllint  # Installs yamllint
+
+      - name: Run Yamllint
+        run: yamllint .
