@@ -24,19 +24,9 @@ jobs:
         run: npm install --save-dev eslint prettier
 
       - name: Run ESLint
-        run: npx eslint . --format json --max-warnings=0 > eslint-report.json || true
+        run: npx eslint . --format stylish
+        continue-on-error: true  # Prevent workflow from stopping due to ESLint errors
 
-      - name: Annotate ESLint results
-        if: success() || failure()
-        run: |
-          eslint_result=$(cat eslint-report.json)
-          echo "ESLint results: $eslint_result"
-        
       - name: Run Prettier
-        run: npx prettier --check . --verbose || true
-
-      - name: Annotate Prettier results
-        if: success() || failure()
-        run: |
-          prettier_result=$(npx prettier --check . --verbose)
-          echo "Prettier results: $prettier_result"
+        run: npx prettier --check .
+        continue-on-error: true  # Prevent workflow from stopping due to Prettier errors
