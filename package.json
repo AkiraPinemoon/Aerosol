@@ -1,0 +1,27 @@
+{
+  "name": "aerosol",
+  "version": "1.0.0",
+  "description": "A server and plugin for Obsidian, that allows for syncing of vaults with self-hosted servers.",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AkiraPinemoon/Aerosol.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/AkiraPinemoon/Aerosol/issues"
+  },
+  "homepage": "https://github.com/AkiraPinemoon/Aerosol#readme",
+  "devDependencies": {
+    "@eslint/js": "^9.19.0",
+    "eslint": "^9.19.0",
+    "globals": "^15.14.0",
+    "typescript-eslint": "^8.23.0"
+  }
+}
