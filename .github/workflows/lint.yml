@@ -21,21 +21,7 @@ jobs:
         run: npm ci
 
       - name: Install linters
-        run: npm install --save-dev eslint prettier
+        run: npm install --save-dev eslint
 
       - name: Run ESLint
         run: npx eslint . --format stylish
-        continue-on-error: true  # Prevent workflow from stopping due to ESLint errors
-
-      - name: Run Prettier and auto-format
-        run: npx prettier --write .
-
-        #TODO: add github-actions[bot] permissions to write to this repo
-      - name: Commit and push Prettier changes
-        run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@users.noreply.github.com"
-          git add .
-          git commit -m "Auto-format code with Prettier"
-          git push
-        continue-on-error: true  # Allows Prettier fixes even if other steps fail
