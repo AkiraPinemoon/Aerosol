@@ -23,9 +23,8 @@ jobs:
       - name: Install linters
         run: npm install --save-dev eslint prettier
 
-      - name: Run linters
-        uses: wearerequired/lint-action@v2
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          eslint: true
-          prettier: true
+      - name: Run ESLint
+        run: npx eslint . --format stylish
+
+      - name: Run Prettier
+        run: npx prettier --check .
