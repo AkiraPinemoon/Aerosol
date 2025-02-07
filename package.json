@@ -17,5 +17,9 @@
   "bugs": {
     "url": "https://github.com/AkiraPinemoon/Aerosol/issues"
   },
-  "homepage": "https://github.com/AkiraPinemoon/Aerosol#readme"
+  "homepage": "https://github.com/AkiraPinemoon/Aerosol#readme",
+  "devDependencies": {
+    "@eslint/js": "^9.19.0",
+    "eslint": "^9.19.0"
+  }
 }
