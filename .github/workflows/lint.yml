@@ -30,6 +30,7 @@ jobs:
       - name: Run Prettier and auto-format
         run: npx prettier --write .
 
+        #TODO: add github-actions[bot] permissions to write to this repo
       - name: Commit and push Prettier changes
         run: |
           git config --global user.name "github-actions"
