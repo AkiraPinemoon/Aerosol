@@ -23,16 +23,23 @@ paths:
           schema:
             type: string
       security:
-        - bearerAuth:
+        - accessBearer:
       responses:
         "200":
           description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  contents:
+                    type: string
         "401":
           description: Unauthorized
         "404":
           description: File not present on the server
 
-    post:
+    put:
       summary: Called when a file has been created or changed on the client
       description: Uploads the new file to the server
       requestBody:
@@ -42,7 +49,7 @@ paths:
               $ref: "#/components/schemas/File"
         required: true
       security:
-        - bearerAuth:
+        - accessBearer:
       responses:
         "200":
           description: Successful operation
@@ -61,7 +68,7 @@ paths:
           schema:
             type: string
       security:
-        - bearerAuth:
+        - accessBearer:
       responses:
         "200":
           description: Successful operation
@@ -89,7 +96,7 @@ paths:
           schema:
             type: string
       security:
-        - bearerAuth:
+        - accessBearer:
       responses:
         "200":
           description: Successful operation
@@ -110,16 +117,23 @@ paths:
           schema:
             type: string
       security:
-        - bearerAuth:
+        - accessBearer:
       responses:
         "200":
           description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  checksum:
+                    type: string
         "401":
           description: Unauthorized
         "404":
           description: File not present on the server
 
-  /register:
+  /user:
     post:
       summary: Registers a new user
       description: Registers a new user on the server (and their passkey) using a registration token returning a jwt
@@ -140,6 +154,31 @@ paths:
       responses:
         "200":
           description: Successful operation
+          headers:
+            Authorization:
+              description: long lived refresh JWT
+              $ref: "#/components/headers/JWT"
+        "401":
+          description: registration token is invalid
+
+    get:
+      summary: Renew Access JWT
+      description: Generate a new Acces JWT using the refresh JWT
+      security:
+        - refreshBearer:
+      responses:
+        "200":
+          description: Successful operation
+          headers:
+            Authorization:
+              $ref: "#/components/headers/JWT"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  expiresIn:
+                    type: number
         "401":
           description: registration token is invalid
 
@@ -155,8 +194,17 @@ components:
           type: string
         contents:
           type: string
+  headers:
+    JWT:
+      description: jwt bearer
+      schema:
+        type: string
   securitySchemes:
-    bearerAuth:
+    accessBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    refreshBearer:
       type: http
       scheme: bearer
       bearerFormat: JWT
