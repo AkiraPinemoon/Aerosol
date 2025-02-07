@@ -94,37 +94,30 @@ export default class Aerosol extends Plugin {
 
 		// registering of sync events
 		this.registerEvent(
-			this.app.vault.on("create", (file) => {
+			this.app.vault.on("create", async (file) => {
 				statusBarText.setText("create " + file.path);
+				await uploadFile(this, file.path);
 			})
 		);
 
 		this.registerEvent(
-			this.app.vault.on("delete", (file) => {
+			this.app.vault.on("delete", async (file) => {
 				statusBarText.setText("delete " + file.path);
+				await deleteFile(this, file.path);
 			})
 		);
 
 		this.registerEvent(
 			this.app.vault.on("modify", async (file) => {
 				statusBarText.setText("modify " + file.path);
-				let contents = await this.app.vault.readBinary(
-					this.app.vault.getFileByPath(file.path)!
-				);
-				let response = await api.postUser({
-					body: {
-						token: "123",
-						username: "Akira",
-					},
-				});
-
-				console.log(response.response.headers.get("Authorization"));
+				await uploadFile(this, file.path);
 			})
 		);
 
 		this.registerEvent(
-			this.app.vault.on("rename", (file) => {
+			this.app.vault.on("rename", async (file, oldPath) => {
 				statusBarText.setText("rename " + file.path);
+				await renameFile(this, oldPath, file.path);
 			})
 		);
 
@@ -334,6 +327,104 @@ async function renewToken(plugin: Aerosol) {
 	} else {
 		new Notice(
 			`Couldn't renew access token: ${apiCall.response.status} - ${apiCall.response.statusText}`
+		);
+	}
+}
+
+async function uploadFile(plugin: Aerosol, path: string) {
+	if (!plugin.settings.accessToken) {
+		new Notice("Couldn't sync - access token not set");
+		return;
+	}
+
+	let file = plugin.app.vault.getFileByPath(path);
+	if (!file) {
+		new Notice("Couldn't sync - couldn't open file");
+		return;
+	}
+
+	let contensBin = await plugin.app.vault.readBinary(file);
+	if (!contensBin) {
+		new Notice("Couldn't sync - couldn't read file");
+		return;
+	}
+
+	let apiCall;
+	try {
+		apiCall = await api.putFile({
+			body: {
+				filename: path,
+				contents: arrayBufferToBase64(contensBin),
+			},
+			auth: plugin.settings.accessToken,
+		});
+	} catch {
+		new Notice("Couldn't reach the Server");
+		return;
+	}
+
+	if (apiCall.response.status == 200) {
+		new Notice("Sync successfull");
+	} else {
+		new Notice(
+			`Couldn't Sync: ${apiCall.response.status} - ${apiCall.response.statusText}`
+		);
+	}
+}
+
+async function deleteFile(plugin: Aerosol, path: string) {
+	if (!plugin.settings.accessToken) {
+		new Notice("Couldn't sync - access token not set");
+		return;
+	}
+
+	let apiCall;
+	try {
+		apiCall = await api.deleteFile({
+			auth: plugin.settings.accessToken,
+			query: {
+				filename: path,
+			},
+		});
+	} catch {
+		new Notice("Couldn't reach the Server");
+		return;
+	}
+
+	if (apiCall.response.status == 200) {
+		new Notice("Sync successfull");
+	} else {
+		new Notice(
+			`Couldn't Sync: ${apiCall.response.status} - ${apiCall.response.statusText}`
+		);
+	}
+}
+
+async function renameFile(plugin: Aerosol, path: string, newPath: string) {
+	if (!plugin.settings.accessToken) {
+		new Notice("Couldn't sync - access token not set");
+		return;
+	}
+
+	let apiCall;
+	try {
+		apiCall = await api.patchFile({
+			auth: plugin.settings.accessToken,
+			query: {
+				filename: path,
+				newFilename: newPath,
+			},
+		});
+	} catch {
+		new Notice("Couldn't reach the Server");
+		return;
+	}
+
+	if (apiCall.response.status == 200) {
+		new Notice("Sync successfull");
+	} else {
+		new Notice(
+			`Couldn't Sync: ${apiCall.response.status} - ${apiCall.response.statusText}`
 		);
 	}
 }
