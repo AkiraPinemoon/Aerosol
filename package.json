@@ -2,6 +2,7 @@
   "name": "aerosol",
   "version": "1.0.0",
   "description": "A server and plugin for Obsidian, that allows for syncing of vaults with self-hosted servers.",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
