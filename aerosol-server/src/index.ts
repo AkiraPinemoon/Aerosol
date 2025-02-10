@@ -9,7 +9,7 @@ const app: Express = express();
 const port = process.env.PORT || 3000;
 const swaggerUi = require('swagger-ui-express');
 const swaggerDocument = require('../../openapi3_1.json');
-const vault_path = "Obsidian Vault"
+const vault_path = process.env.VAULT_PATH || "vault"
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use(express.urlencoded());
