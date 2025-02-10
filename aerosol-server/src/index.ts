@@ -20,10 +20,10 @@ app.get("/", (req: Request, res: Response) => {
 });
 
 app.get("/file", (req: Request, res: Response) => {
-  const exit_jwt = req.get("Authorization")
-  if (!exit_jwt) { res.sendStatus(401); return }
+  const access_jwt = req.get("Authorization")
+  if (!access_jwt) { res.sendStatus(401); return }
 
-  // exit token auth
+  // access token auth
 
   if (!req.query.filename) {
     res.statusCode = 400
@@ -53,10 +53,10 @@ app.get("/file", (req: Request, res: Response) => {
 });
 
 app.put("/file", (req: Request, res: Response) => {
-  const exit_jwt = req.get("Authorization")
-  if (!exit_jwt) { res.sendStatus(401); return }
+  const access_jwt = req.get("Authorization")
+  if (!access_jwt) { res.sendStatus(401); return }
 
-  // exit token auth
+  // access token auth
 
   if (!req.body.filename) {
     res.statusCode = 400
@@ -83,10 +83,10 @@ app.put("/file", (req: Request, res: Response) => {
 });
 
 app.delete("/file", (req: Request, res: Response) => {
-  const exit_jwt = req.get("Authorization")
-  if (!exit_jwt) { res.sendStatus(401); return }
+  const access_jwt = req.get("Authorization")
+  if (!access_jwt) { res.sendStatus(401); return }
 
-  // exit token auth
+  // access token auth
 
   if (!req.query.filename) {
     res.statusCode = 400
@@ -114,10 +114,10 @@ app.delete("/file", (req: Request, res: Response) => {
 });
 
 app.patch("/file", (req: Request, res: Response) => {
-  const exit_jwt = req.get("Authorization")
-  if (!exit_jwt) { res.sendStatus(401); return }
+  const access_jwt = req.get("Authorization")
+  if (!access_jwt) { res.sendStatus(401); return }
 
-  // exit token auth
+  // access token auth
 
   if (!req.query.filename) {
     res.statusCode = 400
@@ -158,10 +158,10 @@ app.patch("/file", (req: Request, res: Response) => {
 });
 
 app.get("/checksum", (req: Request, res: Response) => {
-  const exit_jwt = req.get("Authorization")
-  if (!exit_jwt) { res.sendStatus(401); return }
+  const access_jwt = req.get("Authorization")
+  if (!access_jwt) { res.sendStatus(401); return }
 
-  // exit token auth
+  // access token auth
 
   if (!req.query.filename) {
     // vault checksum
