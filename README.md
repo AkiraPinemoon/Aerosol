@@ -12,7 +12,7 @@ TBD
 ## 🚀 Setup and Usage
 
 - Aerosol Plugin: Read [aerosol-plugin/README.md](aerosol-plugin/README.md)
-- Aerosol Server: TBD
+- Aerosol Server: Read [aerosol-server/README.md](aerosol-server/README.md)
 
 ## 📄 License
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more information.

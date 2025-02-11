@@ -8,9 +8,22 @@
 
 ## How to use
 
-- Make sure your NodeJS is at least v16 (`node --version`).
-- `pnpm i` to install dependencies.
-- `pnpm run dev <VAULT_PATH>` where <VAULT_PATH> is the root of the Vault you want to test on to start compilation and copy the result to the defined Vault.
+### After cloning the repository
+
+1. Make sure your NodeJS is at least v16 (`node --version`).
+2. `npm i -g pnpm` to install pnpm (the package manager)
+3. Follow the steps required after every pull.
+
+### After pulling
+
+1. `pnpm i` to install dependencies.
+2. `pnpm run openapi-ts` to generate the api client from the openapi spec.
+3. Follow the steps required after making changes to the plugin.
+
+### After making changes to the plugin
+
+1. `pnpm run dev <VAULT_PATH>` where <VAULT_PATH> is the root of the Vault you want to test on to start compilation and copy the result to the defined Vault.
+
 
 ## Manually installing the plugin
 
