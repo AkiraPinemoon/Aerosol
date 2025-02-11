@@ -50,6 +50,9 @@ if (prod) {
 	await context.rebuild();
 
 	console.log("copying to " +  targetDir);
+	if (!fs.existsSync(targetDir + "/.obsidian/plugins")){
+		fs.mkdirSync(targetDir + "/.obsidian/plugins");
+	}
 	if (!fs.existsSync(targetDir + "/.obsidian/plugins/aerosol-plugin")){
 		fs.mkdirSync(targetDir + "/.obsidian/plugins/aerosol-plugin");
 	}
