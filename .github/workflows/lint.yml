@@ -5,14 +5,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-   
-    - name: Update dependencies
-      run: |
-        npm update
-        npm install
 
     - name: Install ESLint
-      run: npm install eslint
+      run: npm install eslint @eslint/js typescript typescript-eslint
     
     - name: Run ESLint
-      run: npx eslint
+      run: npx eslint.
