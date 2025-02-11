@@ -1,27 +1,18 @@
-name: Lint
-
+name: Lint 
 on: push
-
 jobs:
-  run-linters:
-    name: Run linters
+  build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Check out Git repository
-        uses: actions/checkout@v3
+    - uses: actions/checkout@v3
+   
+    - name: Update dependencies
+      run: |
+        npm update
+        npm install
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: 'npm'
-
-      - name: Install Node.js dependencies
-        run: npm ci
-
-      - name: Install linters
-        run: npm install --save-dev eslint
-
-      - name: Run ESLint
-        run: npx eslint . --format stylish
+    - name: Run ESLint
+      run: |
+        npm install eslint eslint-config-standard eslint-plugin-import eslint-plugin-n eslint-plugin-promise
+        npm init @eslint/config@latest 
+        npx eslint . --ext .js,.jsx,.ts,.tsx
