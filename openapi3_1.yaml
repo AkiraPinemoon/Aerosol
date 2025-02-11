@@ -133,6 +133,36 @@ paths:
         "404":
           description: File not present on the server
 
+  /checksums:
+    get:
+      summary: Query server for a folders child checksums
+      description: Query server for the checksums of all direct children of a given path.
+      parameters:
+        - name: filename
+          in: query
+          description: The path of the requested folder relative to the Vaul root
+          required: true
+          explode: true
+          schema:
+            type: string
+      security:
+        - accessBearer:
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+        "400":
+          description: Requested path was a file not a folder
+        "401":
+          description: Unauthorized
+        "404":
+          description: Folder not present on the server
+
   /user:
     post:
       summary: Registers a new user
