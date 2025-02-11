@@ -11,7 +11,8 @@ jobs:
         npm update
         npm install
 
+    - name: Install ESLint
+      run: npm install eslint
+    
     - name: Run ESLint
-      run: |
-        npm install eslint
-        npx eslint . --ext .js,.jsx,.ts,.tsx
+      run: npx eslint
