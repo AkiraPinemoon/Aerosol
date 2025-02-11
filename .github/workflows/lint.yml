@@ -11,6 +11,9 @@ jobs:
       - name: Check out Git repository
         uses: actions/checkout@v3
 
+      - name: Initialize packages
+        run: npm install --package-lock
+
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
@@ -21,9 +24,7 @@ jobs:
         run: npm ci
 
       - name: Install linters
-        run: |
-          npm install --save-dev eslint
-          npm install --package-lock
+        run: npm install --save-dev eslint
 
       - name: Run ESLint
         run: npx eslint . --format stylish
