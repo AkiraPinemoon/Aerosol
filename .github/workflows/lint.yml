@@ -13,6 +13,5 @@ jobs:
 
     - name: Run ESLint
       run: |
-        npm install eslint eslint-config-standard eslint-plugin-import eslint-plugin-n eslint-plugin-promise
-        npm init @eslint/config@latest 
+        npm install eslint
         npx eslint . --ext .js,.jsx,.ts,.tsx
