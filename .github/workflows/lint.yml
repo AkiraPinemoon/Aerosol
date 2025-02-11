@@ -10,4 +10,4 @@ jobs:
       run: npm install eslint @eslint/js typescript typescript-eslint
     
     - name: Run ESLint
-      run: npx eslint.
+      run: npx eslint .
