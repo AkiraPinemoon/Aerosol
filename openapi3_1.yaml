@@ -212,6 +212,34 @@ paths:
         "401":
           description: registration token is invalid
 
+  /registrationToken:
+    post:
+      summary: Issue a new registration Token
+      description: Registers a new registration token using the vault name and admin credentials
+      requestBody:
+        content:
+          application/json:
+            schema:
+              required:
+                - vaultName
+                - password
+              type: object
+              properties:
+                vaultName:
+                  type: string
+                password:
+                  type: string
+        required: true
+      responses:
+        "200":
+          description: Successful operation
+          headers:
+            Authorization:
+              description: the new registation token
+              $ref: "#/components/headers/JWT"
+        "401":
+          description: credentials invalid
+
 components:
   schemas:
     File:
