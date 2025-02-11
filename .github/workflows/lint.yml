@@ -21,7 +21,9 @@ jobs:
         run: npm ci
 
       - name: Install linters
-        run: npm install --save-dev eslint
+        run: |
+          npm install --save-dev eslint
+          npm install --package-lock
 
       - name: Run ESLint
         run: npx eslint . --format stylish
