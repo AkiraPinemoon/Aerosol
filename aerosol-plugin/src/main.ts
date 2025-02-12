@@ -311,7 +311,7 @@ async function renewToken(plugin: Aerosol) {
 		plugin.settings.accessToken =
 			apiCall.response.headers.get("Authorization");
 
-		let timeTillRenewal =
+		const timeTillRenewal =
 			apiCall.data!.expiresIn! > 70 ? apiCall.data!.expiresIn! - 10 : 60;
 
 		clearTimeout(plugin.renewalTimeout);
@@ -337,13 +337,13 @@ async function uploadFile(plugin: Aerosol, path: string) {
 		return;
 	}
 
-	let file = plugin.app.vault.getFileByPath(path);
+	const file = plugin.app.vault.getFileByPath(path);
 	if (!file) {
 		new Notice("Couldn't sync - couldn't open file");
 		return;
 	}
 
-	let contensBin = await plugin.app.vault.readBinary(file);
+	const contensBin = await plugin.app.vault.readBinary(file);
 	if (!contensBin) {
 		new Notice("Couldn't sync - couldn't read file");
 		return;

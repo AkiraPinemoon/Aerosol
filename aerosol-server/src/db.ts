@@ -2,9 +2,9 @@ import { Database, open } from "sqlite";
 import sqlite3 from "sqlite3";
 import crypto, { UUID } from "crypto";
 
-const regexFilePathForwardDashes = /^(\/[a-zA-Z0-9_\/-]+)*\.[a-zA-Z0-9]+$/;
+const regexFilePathForwardDashes = /^(\/[\w/-]+)*\.[a-z0-9]+$/i;
 const regexFilePathWindows =
-  /^[a-zA-Z]:\\(?:[a-zA-Z0-9_\\-]+\\)*[a-zA-Z0-9_\\-]+\.[a-zA-Z0-9]+$/;
+  /^[a-z]:\\[\w\\-]+\.[a-z0-9]+$/i;
 
 let DB: null | Database = null;
 
@@ -44,19 +44,19 @@ async function initializeTables() {
   DB = await connectToDataBase();
 
   // Create table for checksums
-  let sqlChecksum =
+  const sqlChecksum =
     "CREATE TABLE IF NOT EXISTS checksums(\
         path TEXT NOT NULL PRIMARY KEY,\
         hash CHAR(20) NOT NULL)";
 
   // Create table for the registration-token and date (format: YYYY-MM-DD)
-  let sqlRegistrationTokens =
+  const sqlRegistrationTokens =
     "CREATE TABLE IF NOT EXISTS registration_tokens(\
         registration_token VARCHAR(255) PRIMARY KEY,\
         creation_date DATE)";
 
   // Create table for users. UUID is 128-bit integer
-  let sqlUsers =
+  const sqlUsers =
     "CREATE TABLE IF NOT EXISTS users(\
         user_UUID UUID NOT NULL PRIMARY KEY,\
         user_name VARCHAR(255) NOT NULL,\
