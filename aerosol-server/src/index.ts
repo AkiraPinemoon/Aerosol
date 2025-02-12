@@ -45,10 +45,10 @@ app.get("/file", (req: Request, res: Response) => {
   }
 
   // decode filename with atob(req.query.filename)?
-  fs.stat(`${vault_path}/${req.query.filename}`, (err, stats) => {
+  fs.stat(`${vault_path}/${req.query.filename}`, (err) => {
     if (err) {
       res.statusCode = 404;
-      res.statusMessage = `The filename \"${req.query.filename}\" could not be found on the server. Details: ${err}`;
+      res.statusMessage = `The filename "${req.query.filename}" could not be found on the server. Details: ${err}`;
       res.send();
       return;
     }
@@ -110,10 +110,10 @@ app.delete("/file", (req: Request, res: Response) => {
     return;
   }
 
-  fs.stat(`${vault_path}/${req.query.filename}`, (err, stats) => {
+  fs.stat(`${vault_path}/${req.query.filename}`, (err) => {
     if (err) {
       res.statusCode = 404;
-      res.statusMessage = `The filename \"${req.query.filename}\" could not be found on the server. Details: ${err}`;
+      res.statusMessage = `The filename "${req.query.filename}" could not be found on the server. Details: ${err}`;
       res.send();
       return;
     }
@@ -149,17 +149,17 @@ app.patch("/file", (req: Request, res: Response) => {
     return;
   }
 
-  fs.stat(`${vault_path}/${req.query.filename}`, (err, stats) => {
+  fs.stat(`${vault_path}/${req.query.filename}`, (err) => {
     if (err) {
       res.statusCode = 404;
-      res.statusMessage = `The filename \"${req.query.filename}\" could not be found on the server. Details: ${err}`;
+      res.statusMessage = `The filename "${req.query.filename}" could not be found on the server. Details: ${err}`;
       res.send();
       return;
     }
     fs.stat(`${vault_path}/${req.query.newFilename}`, (err, stats) => {
       if (!err) {
         res.statusCode = 400;
-        res.statusMessage = `The new filename \"${req.query.newFilename}\" already exists. Details: ${stats}`;
+        res.statusMessage = `The new filename "${req.query.newFilename}" already exists. Details: ${stats}`;
         res.send();
         return;
       }
@@ -196,10 +196,10 @@ app.get("/checksum", (req: Request, res: Response) => {
   }
 
   // file checksum
-  fs.stat(`${vault_path}/${req.query.filename}`, (err, stats) => {
+  fs.stat(`${vault_path}/${req.query.filename}`, (err) => {
     if (err) {
       res.statusCode = 404;
-      res.statusMessage = `The filename \"${req.query.filename}\" could not be found on the server. Details: ${err}`;
+      res.statusMessage = `The filename "${req.query.filename}" could not be found on the server. Details: ${err}`;
       res.send();
       return;
     }
