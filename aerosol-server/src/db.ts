@@ -2,11 +2,12 @@ import { Database, open } from "sqlite";
 import sqlite3 from "sqlite3";
 import crypto, { UUID } from "crypto";
 
-const regexFilePathForwardDashes = /^(\/[\w/-]+)*\.[a-z0-9]+$/i;
-const regexFilePathWindows =
-  /^[a-z]:\\[\w\\-]+\.[a-z0-9]+$/i;
+const regexFilePathForwardDashes = /^\/[\w/-]+\.[a-z0-9]+$/i;
+const regexFilePathWindows = /^[a-z]:\\[\w\\-]+\.[a-z0-9]+$/i;
 
 let DB: null | Database = null;
+
+const TODO = true;
 
 // Function to connect to Data Base
 async function connectToDataBase(): Promise<Database> {
@@ -124,16 +125,25 @@ async function newUser(userName: string) {
             " to the table users"
         );
         return userUUID;
-      } catch (err: any) {
-        console.log(err.message);
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          console.log(err.message);
+        } else {
+          console.log(err);
+        }
         return null;
       }
     } else {
       // Invalid username format
       console.log("Invalid username format");
     }
-  } catch (err: any) {
-    console.log(err.message);
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      console.log(err.message);
+    } else {
+      console.log(err);
+    }
+    return null;
   }
 }
 
@@ -149,8 +159,12 @@ async function getRefreshTokenVersion(userUUID: UUID) {
       try {
         const refreshTokenVersion = await DB.get(sql, [userUUID]);
         return refreshTokenVersion.refresh_token_version;
-      } catch (err: any) {
-        console.log(err.message);
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          console.log(err.message);
+        } else {
+          console.log(err);
+        }
         return null;
       }
     } else {
@@ -181,8 +195,12 @@ async function updateRefreshTokenVersion(userUUID: UUID) {
             updatedRefreshTokenVersion
         );
         return await getRefreshTokenVersion(userUUID);
-      } catch (err: any) {
-        console.log(err.message);
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          console.log(err.message);
+        } else {
+          console.log(err);
+        }
         return null;
       }
     } else {
@@ -210,8 +228,13 @@ async function getUserName(userUUID: UUID) {
           "The username of the UUID " + userUUID + " is " + username.user_name
         );
         return username.user_name;
-      } catch (err: any) {
-        console.log(err.message);
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          console.log(err.message);
+        } else {
+          console.log(err);
+        }
+        return null;
       }
     } else {
       console.log("Invalid UUID format");
@@ -242,8 +265,12 @@ async function updateUserName(userUUID: UUID, userName: string) {
               userName
           );
           return;
-        } catch (err: any) {
-          console.log(err.message);
+        } catch (err: unknown) {
+          if (err instanceof Error) {
+            console.log(err.message);
+          } else {
+            console.log(err);
+          }
           return null;
         }
       } else {
@@ -254,8 +281,12 @@ async function updateUserName(userUUID: UUID, userName: string) {
       console.log("Invalid UUID format: string, length == 32");
       return null;
     }
-  } catch (err: any) {
-    console.log(err.message);
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      console.log(err.message);
+    } else {
+      console.log(err);
+    }
     return null;
   }
 }
@@ -282,8 +313,13 @@ async function deleteUserEntry(userUUID: UUID) {
       console.log("Invalid UUID format: string, length == 32");
       return null;
     }
-  } catch (err: any) {
-    console.log(err.message);
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      console.log(err.message);
+    } else {
+      console.log(err);
+    }
+    return null;
   }
 }
 
@@ -295,18 +331,23 @@ async function newRegistrationToken(registrationToken: string) {
         VALUES(?, DATE('now'))";
   try {
     if (
-      true /*insert some type of format checking for the registrationtoken*/
+      TODO /*insert some type of format checking for the registrationtoken*/
     ) {
       try {
         const registrationTokenRow = await DB.run(sql, [registrationToken]);
         console.log(
           "The Registration-Token " +
             registrationToken +
-            " was entered into the database at "
+            " was entered into the database at " +
+            registrationTokenRow
         );
         return;
-      } catch (err: any) {
-        console.log(err.message);
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          console.log(err.message);
+        } else {
+          console.log(err);
+        }
         return null;
       }
     } else {
@@ -314,8 +355,12 @@ async function newRegistrationToken(registrationToken: string) {
       console.log("Invalid token format");
       return null;
     }
-  } catch (err: any) {
-    console.log(err.message);
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      console.log(err.message);
+    } else {
+      console.log(err);
+    }
     return null;
   }
 }
@@ -327,7 +372,7 @@ async function deleteRegistrationToken(registrationToken: string) {
     "DELETE FROM registration_tokens\
         WHERE registration_token = ?";
   try {
-    if (true /*insert format checking for registration token*/) {
+    if (TODO /*insert format checking for registration token*/) {
       try {
         const deleteRegToken = await DB.run(sql, [registrationToken]);
         console.log(
@@ -336,8 +381,12 @@ async function deleteRegistrationToken(registrationToken: string) {
             " was successfully deleted from registration_tokens"
         );
         return deleteRegToken;
-      } catch (err: any) {
-        console.log(err.message);
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          console.log(err.message);
+        } else {
+          console.log(err);
+        }
         return null;
       }
     } else {
@@ -345,8 +394,13 @@ async function deleteRegistrationToken(registrationToken: string) {
       console.log("Invalid Registration-Token format");
       return null;
     }
-  } catch (err: any) {
-    console.log(err.message);
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      console.log(err.message);
+    } else {
+      console.log(err);
+    }
+    return null;
   }
 }
 
@@ -361,13 +415,17 @@ async function newFile(filePath: string, hash: string) {
       regexFilePathForwardDashes.test(filePath) ||
       regexFilePathWindows.test(filePath)
     ) {
-      if (true /* insert hash format condition ... && ()*/) {
+      if (TODO /* insert hash format condition ... && ()*/) {
         try {
           await DB.run(sql, [filePath, hash]);
           console.log("Added " + filePath + " with " + hash + " to checksums");
           return;
-        } catch (err: any) {
-          console.log(err.message);
+        } catch (err: unknown) {
+          if (err instanceof Error) {
+            console.log(err.message);
+          } else {
+            console.log(err);
+          }
           return null;
         }
       } else {
@@ -398,8 +456,12 @@ async function getFileHash(filePath: string) {
       try {
         const hash = await DB.get(sql, [filePath]);
         return hash.hash;
-      } catch (err: any) {
-        console.log(err.message);
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          console.log(err.message);
+        } else {
+          console.log(err);
+        }
         return null;
       }
     } else {
@@ -434,8 +496,12 @@ async function deleteFile(filePath: string) {
           console.log("No entry with the path " + filePath + " was found");
           return null;
         }
-      } catch (err: any) {
-        console.log(err.message);
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          console.log(err.message);
+        } else {
+          console.log(err);
+        }
         return null;
       }
     } else {
@@ -443,8 +509,13 @@ async function deleteFile(filePath: string) {
       console.log("Invalid path format");
       return null;
     }
-  } catch (err: any) {
-    console.log(err.message);
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      console.log(err.message);
+    } else {
+      console.log(err);
+    }
+    return null;
   }
 }
 
@@ -468,16 +539,24 @@ async function updateFilePath(oldFilePath: string, newFilePath: string) {
           "The path of " + oldFilePath + " was changed to " + newFilePath
         );
         return;
-      } catch (err: any) {
-        console.log(err.message);
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          console.log(err.message);
+        } else {
+          console.log(err);
+        }
         return null;
       }
     } else {
       console.log("Invalid path format");
       return null;
     }
-  } catch (err: any) {
-    console.log(err.message);
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      console.log(err.message);
+    } else {
+      console.log(err);
+    }
     return null;
   }
 }
