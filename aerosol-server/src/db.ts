@@ -28,12 +28,15 @@ async function connectToDataBase(): Promise<Database> {
     console.log("Unsuccessfull attempt connecting to database");
     throw err;
   }
+
+  await initializeTables(DB);
   return DB;
 }
 
 // Create the function for tables in database and returns true
-async function initializeTables() {
-  DB = await connectToDataBase();
+async function initializeTables(db: Database | null) {
+  DB = db ? db : await connectToDataBase();
+  //DB = await connectToDataBase();
 
   // Create table for checksums
   const sqlChecksum =
