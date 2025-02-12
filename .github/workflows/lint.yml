@@ -6,10 +6,14 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Install
-      run: |
-        npm i -g pnpm
-        pnpm install --no-frozen-lockfile
+    - name: Install pnpm
+      run: npm i -g pnpm
+  
+    - name: Initialize pnpm workspace
+      run: pnpm workspace init
+  
+    - name: Install dependencies
+     run: pnpm install --no-frozen-lockfile
 
     - name: Run ESLint
       run: npx eslint .
