@@ -5,16 +5,12 @@ import {
 	App,
 	arrayBufferToBase64,
 	ButtonComponent,
-	Editor,
 	Events,
-	MarkdownView,
-	Modal,
 	Notice,
 	Plugin,
 	PluginSettingTab,
 	setIcon,
 	Setting,
-	TextComponent,
 } from "obsidian";
 
 interface AerosolSettings {
