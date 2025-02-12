@@ -9,7 +9,7 @@ jobs:
     - name: Install
       run: |
         npm i -g pnpm
-        pnpm i
+        pnpm install --no-frozen-lockfile
 
     - name: Run ESLint
       run: npx eslint .
