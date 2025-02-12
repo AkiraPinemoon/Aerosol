@@ -9,9 +9,6 @@ jobs:
     - name: Install pnpm
       run: npm i -g pnpm
   
-    - name: Initialize pnpm workspace
-      run: pnpm workspace init
-  
     - name: Install dependencies
       run: pnpm install --no-frozen-lockfile
 
