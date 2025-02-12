@@ -13,7 +13,7 @@ jobs:
       run: pnpm workspace init
   
     - name: Install dependencies
-     run: pnpm install --no-frozen-lockfile
+      run: pnpm install --no-frozen-lockfile
 
     - name: Run ESLint
       run: npx eslint .
