@@ -2,9 +2,14 @@ import { Database, open } from "sqlite";
 import sqlite3 from "sqlite3";
 import crypto, { UUID } from "crypto";
 
-const regexFilePathForwardDashes = /^(\/[a-zA-Z0-9_\/-]+)*\.[a-zA-Z0-9]+$/;
-const regexFilePathWindows =
-  /^[a-zA-Z]:\\(?:[a-zA-Z0-9_\\-]+\\)*[a-zA-Z0-9_\\-]+\.[a-zA-Z0-9]+$/;
+const regexFilePathForwardDashes =
+  /^(?:\.\/)?(?:[a-zA-Z0-9_\-]+\/)*[a-zA-Z0-9_\-]+\/?$/;
+const regexFilePathBackwardDashes =
+  /^(?:\.\/)?(?:[a-zA-Z0-9_\-]+\/)*[a-zA-Z0-9_\-]+\/?$/;
+const regexFolderPathBackwardDashes =
+  /^(?:\.\\|)(?:[a-zA-Z0-9_\\-]+\\)*[a-zA-Z0-9_\\-]+\\?$/;
+const regexFolderPathForwardDashes =
+  /^(?:\.\/|)(?:[a-zA-Z0-9_\-]+\/)*[a-zA-Z0-9_\-]+\/?$/;
 
 let DB: null | Database = null;
 
@@ -26,41 +31,34 @@ async function connectToDataBase(): Promise<Database> {
   return DB;
 }
 
-/*
-function hashValue(value, err) {
-    if(typeof(value) == 'string' && value.length > 0){
-        let hash = crypto.createHmac('md5', 'secret-hash-key');
-        let update = hash.update(value);
-        let hashedValue = update.digest('hex');
-        return hashedValue;
-    } else {
-        console.log(err)
-    }
-}
-*/
-
 // Create the function for tables in database and returns true
 async function initializeTables() {
   DB = await connectToDataBase();
 
   // Create table for checksums
-  let sqlChecksum =
+  const sqlChecksum =
     "CREATE TABLE IF NOT EXISTS checksums(\
         path TEXT NOT NULL PRIMARY KEY,\
         hash CHAR(20) NOT NULL)";
 
   // Create table for the registration-token and date (format: YYYY-MM-DD)
-  let sqlRegistrationTokens =
+  const sqlRegistrationTokens =
     "CREATE TABLE IF NOT EXISTS registration_tokens(\
         registration_token VARCHAR(255) PRIMARY KEY,\
         creation_date DATE)";
 
   // Create table for users. UUID is 128-bit integer
-  let sqlUsers =
+  const sqlUsers =
     "CREATE TABLE IF NOT EXISTS users(\
         user_UUID UUID NOT NULL PRIMARY KEY,\
         user_name VARCHAR(255) NOT NULL,\
         refresh_token_version INT)";
+
+  // Create table for admin_passwords
+  const sqlAdminPassword =
+    "CREATE TABLE IF NOT EXISTS admins(\
+        vault_path TEXT NOT NULL PRIMARY KEY,\
+        password VARCHAR(255)";
 
   try {
     await DB.run(sqlUsers, []);
@@ -80,28 +78,13 @@ async function initializeTables() {
   } catch {
     console.log("Error creating checksums table");
   }
+  try {
+    await DB.run(sqlAdminPassword, []);
+    console.log("Created Admin Password table");
+  } catch {
+    console.log("Error creating Admin Password table");
+  }
   return true;
-  /*
-        DB.run(sqlRegistrationToken, [], (err)=>{
-            if (err) {
-                console.log('Error creating registration-tokens table');
-                throw err;
-            }
-            console.log('Created registration-tokens');
-        });
-        DB.run(sqlChecksum, [], (err)=>{
-            if (err) {
-                console.log('Error creating checksums table');
-                throw err;
-            }
-            console.log('Created checksums table');
-        });
-    finally {
-        DB.close(()=> {
-            console.log('Database has been closed')
-        });
-    }
-    */
 }
 
 // Takes a username, creates a new user-entry in Users and returns the UUID
@@ -320,7 +303,7 @@ async function newRegistrationToken(registrationToken: string) {
   }
 }
 
-// Take a Registration-Token, deletes the entry and returns true
+// Take a Registration-Token, deletes the entry if one was found and returns true
 async function deleteRegistrationToken(registrationToken: string) {
   DB = await connectToDataBase();
   const sql =
@@ -330,12 +313,19 @@ async function deleteRegistrationToken(registrationToken: string) {
     if (true /*insert format checking for registration token*/) {
       try {
         const deleteRegToken = await DB.run(sql, [registrationToken]);
-        console.log(
-          "The Registration-Token " +
-            registrationToken +
-            " was successfully deleted from registration_tokens"
-        );
-        return deleteRegToken;
+        if (deleteRegToken.changes == 1) {
+          console.log(
+            "The Registration-Token " +
+              registrationToken +
+              " was successfully deleted from registration_tokens"
+          );
+          return true;
+        } else {
+          console.log(
+            "No entry was found in registration tokens for " + registrationToken
+          );
+          return false;
+        }
       } catch (err: any) {
         console.log(err.message);
         return null;
@@ -359,7 +349,7 @@ async function newFile(filePath: string, hash: string) {
   try {
     if (
       regexFilePathForwardDashes.test(filePath) ||
-      regexFilePathWindows.test(filePath)
+      regexFilePathBackwardDashes.test(filePath)
     ) {
       if (true /* insert hash format condition ... && ()*/) {
         try {
@@ -393,7 +383,7 @@ async function getFileHash(filePath: string) {
   try {
     if (
       regexFilePathForwardDashes.test(filePath) ||
-      regexFilePathWindows.test(filePath)
+      regexFilePathBackwardDashes.test(filePath)
     ) {
       try {
         const hash = await DB.get(sql, [filePath]);
@@ -421,7 +411,7 @@ async function deleteFile(filePath: string) {
   try {
     if (
       regexFilePathForwardDashes.test(filePath) ||
-      regexFilePathWindows.test(filePath)
+      regexFilePathBackwardDashes.test(filePath)
     ) {
       try {
         const change = await DB.run(sql, [filePath]);
@@ -458,9 +448,9 @@ async function updateFilePath(oldFilePath: string, newFilePath: string) {
   try {
     if (
       (regexFilePathForwardDashes.test(oldFilePath) ||
-        regexFilePathWindows.test(oldFilePath)) &&
+        regexFilePathBackwardDashes.test(oldFilePath)) &&
       (regexFilePathForwardDashes.test(newFilePath) ||
-        regexFilePathWindows.test(newFilePath))
+        regexFilePathBackwardDashes.test(newFilePath))
     ) {
       try {
         await DB.run(sql, [oldFilePath, newFilePath]);
@@ -482,6 +472,71 @@ async function updateFilePath(oldFilePath: string, newFilePath: string) {
   }
 }
 
+// Take a path to a vault and a password and create a new entry
+async function newAdminPassword(vaultPath: string, admPass: string) {
+  DB = await connectToDataBase();
+  const sql =
+    "INSERT INTO admins(vault_path, password)\
+      VALUES(?, ?)";
+  try {
+    if (
+      (regexFolderPathForwardDashes.test(vaultPath) ||
+        regexFolderPathBackwardDashes.test(vaultPath)) &&
+      typeof admPass == "string"
+    ) {
+      try {
+        await DB.run(sql, [vaultPath, admPass]);
+        console.log(
+          "Added password for the vault behind the path " + vaultPath
+        );
+        return;
+      } catch (err: any) {
+        console.log(err.message);
+        return null;
+      }
+    } else {
+      console.log("Invalid Path format or invalid admin password: string");
+      return null;
+    }
+  } catch (err) {
+    console.log(err);
+    return null;
+  }
+}
+
+async function getAdminPassword(vaultPath: string) {
+  DB = await connectToDataBase();
+  const sql =
+    "SELECT admin_password\
+    FROM admins\
+    WHERE vault_path=?";
+  try {
+    if (
+      regexFolderPathForwardDashes.test(vaultPath) ||
+      regexFolderPathBackwardDashes.test(vaultPath)
+    ) {
+      try {
+        const adminPass = await DB.get(sql, [vaultPath]);
+        console.log(
+          "The admin password for the vault path " +
+            vaultPath +
+            " is " +
+            adminPass.admin_password
+        );
+        return adminPass.admin_password;
+      } catch (err: any) {
+        console.log(err.message);
+      }
+    } else {
+      console.log("Invalid path format");
+      return null;
+    }
+  } catch (err) {
+    console.log(err);
+    return null;
+  }
+}
+
 export default {
   initializeTables,
   newUser,
@@ -496,4 +551,6 @@ export default {
   getFileHash,
   deleteFile,
   updateFilePath,
+  newAdminPassword,
+  getAdminPassword,
 };
