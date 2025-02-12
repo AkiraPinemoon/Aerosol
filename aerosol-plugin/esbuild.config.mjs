@@ -14,9 +14,6 @@ const prod = (process.argv[2] === "production");
 const targetDir = process.argv[2];
 
 const context = await esbuild.context({
-	logger: {
-		logLevel: 'info',
-	  },
 	banner: {
 		js: banner,
 	},
