@@ -341,7 +341,7 @@ async function deleteRegistrationToken(registrationToken: string) {
 }
 
 // Take a File-Path (JS-string-format), create a Hash, create a new file-entry in Checksum and return
-async function newFile(filePath: string, hash: string) {
+async function newChecksum(filePath: string, hash: string) {
   DB = await connectToDataBase();
   const sql =
     "INSERT INTO checksums(path, hash)\
@@ -374,7 +374,7 @@ async function newFile(filePath: string, hash: string) {
 }
 
 // Take a File-Path and return the hash for it
-async function getFileHash(filePath: string) {
+async function getChecksum(filePath: string) {
   DB = await connectToDataBase();
   const sql =
     "SELECT hash\
@@ -402,8 +402,60 @@ async function getFileHash(filePath: string) {
   }
 }
 
+// Get all checksums from checksums
+async function getAllChecksums() {
+  DB = await connectToDataBase();
+  const sql =
+    "SELECT *\
+        FROM checksums\
+        WHERE path <> '.'";
+  try {
+    const pathAndHash = await DB.all(sql);
+    let fileChecksums: Record<string, string> = {};
+    for (const hash of pathAndHash) {
+      fileChecksums[hash.path] = hash.hash;
+    }
+    return fileChecksums;
+  } catch (err: any) {
+    console.log(err.message);
+    return null;
+  }
+}
+
+// Update checksum of given path(file)
+async function updateChecksum(filePath: string, updatedChecksum: string) {
+  DB = await connectToDataBase();
+  const sql =
+    "UPDATE checksums\
+        SET hash = ?\
+        WHERE path = ?";
+  try {
+    if (
+      regexFilePathForwardDashes.test(filePath) ||
+      regexFilePathBackwardDashes.test(filePath)
+    ) {
+      try {
+        await DB.run(sql, [updatedChecksum, filePath]);
+        console.log(
+          "The checksum of " + filePath + " was changed to " + updatedChecksum
+        );
+        return;
+      } catch (err: any) {
+        console.log(err.message);
+        return null;
+      }
+    } else {
+      console.log("Invalid path format");
+      return null;
+    }
+  } catch (err: any) {
+    console.log(err.message);
+    return null;
+  }
+}
+
 // Take a File-Path, delete the Entry for that file and return true
-async function deleteFile(filePath: string) {
+async function deleteChecksum(filePath: string) {
   DB = await connectToDataBase();
   const sql =
     "DELETE FROM checksums\
@@ -547,9 +599,11 @@ export default {
   updateRefreshTokenVersion,
   newRegistrationToken,
   deleteRegistrationToken,
-  newFile,
-  getFileHash,
-  deleteFile,
+  newChecksum,
+  getChecksum,
+  getAllChecksums,
+  updateChecksum,
+  deleteChecksum,
   updateFilePath,
   newAdminPassword,
   getAdminPassword,

@@ -2,6 +2,7 @@ import express, { Express, Request, Response } from "express";
 import dotenv from "dotenv";
 import fs from "node:fs";
 import cors from "cors";
+import checksums from "./checksums";
 
 dotenv.config();
 
