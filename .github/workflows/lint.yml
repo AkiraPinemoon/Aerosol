@@ -6,8 +6,10 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Install ESLint
-      run: npm install eslint @eslint/js typescript typescript-eslint
-    
+    - name: Install
+      run: |
+        npm i -g pnpm
+        pnpm i
+
     - name: Run ESLint
       run: npx eslint .
