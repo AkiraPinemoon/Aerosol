@@ -5,7 +5,7 @@ import crypto, { UUID } from "crypto";
 const regexFilePathForwardDashes =
   /^(?:\.\/)?(?:[a-zA-Z0-9_\-]+\/)*[a-zA-Z0-9_\-]+\/?$/;
 const regexFilePathBackwardDashes =
-  /^(?:\.\/)?(?:[a-zA-Z0-9_\-]+\/)*[a-zA-Z0-9_\-]+\/?$/;
+  /^(?:.\/)?(?:[a-zA-Z0-9-]+\/)*[a-zA-Z0-9-]+.[a-zA-Z0-9]+$/;
 const regexFolderPathBackwardDashes =
   /^(?:\.\\|)(?:[a-zA-Z0-9_\\-]+\\)*[a-zA-Z0-9_\\-]+\\?$/;
 const regexFolderPathForwardDashes =
