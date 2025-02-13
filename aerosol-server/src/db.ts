@@ -61,31 +61,31 @@ async function initializeTables(db: Database | null) {
   const sqlAdminPassword =
     "CREATE TABLE IF NOT EXISTS admins(\
         vault_path TEXT NOT NULL PRIMARY KEY,\
-        password VARCHAR(255)";
+        password VARCHAR(255))";
 
   try {
     await DB.run(sqlUsers, []);
     console.log("Created users table");
-  } catch {
-    console.log("Error creating users table");
+  } catch (e) {
+    console.log("Error creating users table: " + e);
   }
   try {
     await DB.run(sqlRegistrationTokens, []);
     console.log("Created users table");
-  } catch {
-    console.log("Error creating registration-tokens table");
+  } catch (e) {
+    console.log("Error creating registration-tokens table: " + e);
   }
   try {
     await DB.run(sqlChecksum, []);
     console.log("Created checksums table");
-  } catch {
-    console.log("Error creating checksums table");
+  } catch (e) {
+    console.log("Error creating checksums table: " + e);
   }
   try {
     await DB.run(sqlAdminPassword, []);
     console.log("Created Admin Password table");
-  } catch {
-    console.log("Error creating Admin Password table");
+  } catch (e) {
+    console.log("Error creating Admin Password table: " + e);
   }
   return true;
 }
@@ -352,7 +352,8 @@ async function newChecksum(filePath: string, hash: string) {
   try {
     if (
       regexFilePathForwardDashes.test(filePath) ||
-      regexFilePathBackwardDashes.test(filePath)
+      regexFilePathBackwardDashes.test(filePath) ||
+      filePath == "."
     ) {
       if (true /* insert hash format condition ... && ()*/) {
         try {
@@ -386,21 +387,22 @@ async function getChecksum(filePath: string) {
   try {
     if (
       regexFilePathForwardDashes.test(filePath) ||
-      regexFilePathBackwardDashes.test(filePath)
+      regexFilePathBackwardDashes.test(filePath) ||
+      filePath == "."
     ) {
       try {
         const hash = await DB.get(sql, [filePath]);
-        return hash.hash;
+        return hash.hash; // hier fehler
       } catch (err: any) {
-        console.log(err.message);
+        console.error(err.message);
         return null;
       }
     } else {
-      console.log("Invalid path format");
+      console.error("Invalid path format");
       return null;
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
     return err;
   }
 }
@@ -420,7 +422,7 @@ async function getAllChecksums() {
     }
     return fileChecksums;
   } catch (err: any) {
-    console.log(err.message);
+    console.error(err.message);
     return null;
   }
 }
@@ -435,7 +437,8 @@ async function updateChecksum(filePath: string, updatedChecksum: string) {
   try {
     if (
       regexFilePathForwardDashes.test(filePath) ||
-      regexFilePathBackwardDashes.test(filePath)
+      regexFilePathBackwardDashes.test(filePath) ||
+      filePath == "."
     ) {
       try {
         await DB.run(sql, [updatedChecksum, filePath]);
@@ -466,7 +469,8 @@ async function deleteChecksum(filePath: string) {
   try {
     if (
       regexFilePathForwardDashes.test(filePath) ||
-      regexFilePathBackwardDashes.test(filePath)
+      regexFilePathBackwardDashes.test(filePath) ||
+      filePath == "."
     ) {
       try {
         const change = await DB.run(sql, [filePath]);

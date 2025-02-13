@@ -41,7 +41,6 @@ app.get("/file", (req: Request, res: Response) => {
     return;
   }
 
-  // get file
   if (!req.query.filename) {
     console.error(`/file GET: filename is ${req.query.filename}`);
     res.statusCode = 400;
@@ -50,8 +49,10 @@ app.get("/file", (req: Request, res: Response) => {
     return;
   }
 
+  // get file
   fs.stat(`${vault_path}/${req.query.filename}`).then((stats) => {
     fs.readFile(`${vault_path}/${req.query.filename}`, "utf-8").then((data) => {
+      checksums.recalculateChecksums(vault_path, req.query.filename!.toString());
       res.send({ contents: btoa(data) });
     }).catch((err) => {
       console.error(`/file GET: ${err}`);
@@ -77,7 +78,9 @@ app.put("/file", (req: Request, res: Response) => {
     return;
   }
 
+  // create file / change content
   fs.writeFile(`${vault_path}/${req.body.filename}`, atob(req.body.contents)).then(() => {
+    checksums.recalculateChecksums(vault_path, req.body.filename);
     res.sendStatus(200)
   }).catch((err) => {
     console.error(`/file PUT: ${err}`);
@@ -98,8 +101,10 @@ app.delete("/file", (req: Request, res: Response) => {
     return;
   }
 
+  // delete file
   fs.stat(`${vault_path}/${req.query.filename}`).then((stats) => {
     fs.unlink(`${vault_path}/${req.query.filename}`).then(() => {
+      checksums.recalculateChecksums(vault_path, req.query.filename!.toString(), true);
       res.sendStatus(200);
     }).catch((err) => {
       console.error(`/file DELETE: ${err}`);
@@ -130,12 +135,15 @@ app.patch("/file", (req: Request, res: Response) => {
     return;
   }
 
+  // rename file
   fs.stat(`${vault_path}/${req.query.filename}`).then((stats) => {
     fs.stat(`${vault_path}/${req.query.newFilename}`).then((stats) => {
       console.error(`/file PATCH: The newFilename already exists: \"${req.query.newFilename}\"`);
       res.sendStatus(400);
     }).catch((err) => {
       fs.rename(`${vault_path}/${req.query.filename}`, `${vault_path}/${req.query.newFilename}`).then(() => {
+        checksums.recalculateChecksums(vault_path, req.query.filename!.toString(), true);
+        checksums.recalculateChecksums(vault_path, req.query.newFilename!.toString());
         res.sendStatus(200);
       }).catch((err) => {
         console.error(`/file PATCH: ${err}`);
@@ -155,14 +163,23 @@ app.get("/checksum", (req: Request, res: Response) => {
   }
 
   if (!req.query.filename) {
-    // vault checksum
-    res.send("this would be checksum of vault");
+    db.getChecksum(".").then((checksum) => {
+      res.send({ "checksum": checksum });
+    }).catch((err) => {
+      console.error(`/checksum GET: ${err}`);
+      res.sendStatus(500);
+    });
     return;
   }
 
   // file checksum
   fs.stat(`${vault_path}/${req.query.filename}`).then(() => {
-    res.send(`this would be checksum of ${req.query.filename}`);
+    db.getChecksum(req.query.filename!.toString()).then((checksum) => {
+      res.send({ "checksum": checksum });
+    }).catch((err) => {
+      console.error(`/checksum GET: ${err}`);
+      res.sendStatus(500);
+    });
   }).catch((err) => {
     console.error(`/checksum GET: ${err}`);
     res.sendStatus(404);
@@ -182,12 +199,34 @@ app.get("/checksums", (req: Request, res: Response) => {
     return;
   }
 
-  fs.stat(`${vault_path}/${req.query.filename}`).then(() => {
-    res.send(`this would be checksums of ${req.query.filename}`);
+  // get checksums
+  db.getAllChecksums().then((cs) => {
+    res.send(cs);
   }).catch((err) => {
-    console.error(`/checksum GET: ${err}`);
-    res.sendStatus(404);
+    console.error(`/checksums GET: ${err}`);
+    res.sendStatus(500);
   });
+  //fs.stat(`${vault_path}/${req.query.filename}`).then(() => {
+  //  fs.readdir(`${vault_path}/${req.query.filename}`).then((paths) => {
+  //    let checksum: Record<string, string> = {};
+  //    paths.forEach((item, index) => {
+  //      db.getChecksum(`${vault_path}/${req.query.filename}/${item}`).then((cs) => {
+  //        checksum[item] = cs;
+  //      }).catch((err) => {
+  //        console.error(`/checksums GET: ${err}`);
+  //        res.sendStatus(500);
+  //        return;
+  //      });
+  //    });
+  //    res.send(checksum);
+  //  }).catch((err) => {
+  //    console.error(`/checksums GET: ${err}`);
+  //    res.sendStatus(500);
+  //  });
+  //}).catch((err) => {
+  //  console.error(`/checksums GET: ${err}`);
+  //  res.sendStatus(404);
+  //});
 });
 
 app.post("/user", (req: Request, res: Response) => {
@@ -259,7 +298,7 @@ app.get("/user", (req: Request, res: Response) => {
   // check decoded.version
 
   res.setHeader("Authorization", jwt.sign({ name: decoded.name, uuid: decoded.uuid, exp: Math.floor(Date.now() / 1000) + signing_ttl }, signing_key));
-  res.send({ expiresIn: 60 });
+  res.send({ expiresIn: signing_ttl });
 });
 
 app.post("/registrationToken", (req: Request, res: Response) => {
