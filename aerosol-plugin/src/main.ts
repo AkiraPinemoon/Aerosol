@@ -4,6 +4,7 @@ import { client } from "src/api/client.gen";
 import {
 	App,
 	arrayBufferToBase64,
+	base64ToArrayBuffer,
 	ButtonComponent,
 	Editor,
 	Events,
@@ -16,12 +17,14 @@ import {
 	Setting,
 	TextComponent,
 } from "obsidian";
+import * as SparkMD5 from "spark-md5";
 
 interface AerosolSettings {
 	connected: boolean;
 	serverProtocol: string;
 	serverURL: string;
 	serverPort: number;
+	registrationToken: string;
 	refreshToken: string | null;
 	accessToken: string | null;
 }
@@ -31,6 +34,7 @@ const DEFAULT_SETTINGS: AerosolSettings = {
 	serverProtocol: "https",
 	serverURL: "",
 	serverPort: 27027,
+	registrationToken: "",
 	refreshToken: null,
 	accessToken: null,
 };
@@ -45,11 +49,13 @@ export default class Aerosol extends Plugin {
 	settings: AerosolSettings;
 	events: AerosolEvents;
 	renewalTimeout: number | undefined;
+	checksums: { vault: string; files: Record<string, string> };
 
 	async onload() {
 		// init
 		await this.loadSettings();
 		this.events = new AerosolEvents();
+		await calculateChecksums(this);
 
 		// add status bar text
 		const statusBarText = this.addStatusBarItem();
@@ -97,6 +103,7 @@ export default class Aerosol extends Plugin {
 			this.app.vault.on("create", async (file) => {
 				statusBarText.setText("create " + file.path);
 				await uploadFile(this, file.path);
+				await recalculateChecksums(this, file.path);
 			})
 		);
 
@@ -104,6 +111,7 @@ export default class Aerosol extends Plugin {
 			this.app.vault.on("delete", async (file) => {
 				statusBarText.setText("delete " + file.path);
 				await deleteFile(this, file.path);
+				await recalculateChecksums(this, file.path, true);
 			})
 		);
 
@@ -111,6 +119,7 @@ export default class Aerosol extends Plugin {
 			this.app.vault.on("modify", async (file) => {
 				statusBarText.setText("modify " + file.path);
 				await uploadFile(this, file.path);
+				await recalculateChecksums(this, file.path);
 			})
 		);
 
@@ -118,6 +127,8 @@ export default class Aerosol extends Plugin {
 			this.app.vault.on("rename", async (file, oldPath) => {
 				statusBarText.setText("rename " + file.path);
 				await renameFile(this, oldPath, file.path);
+				await recalculateChecksums(this, oldPath, true);
+				await recalculateChecksums(this, file.path);
 			})
 		);
 
@@ -130,7 +141,51 @@ export default class Aerosol extends Plugin {
 					if (!pollingInterval) {
 						pollingInterval = this.registerInterval(
 							setInterval(async () => {
-								// TODO: polling code here
+								statusBarText.setText("polling");
+								const res = await api.getChecksum({
+									auth: this.settings.accessToken!,
+								});
+								if (res.response.status != 200) {
+									new Notice("Polling error");
+									return;
+								}
+
+								if (
+									res.data!.checksum == this.checksums.vault
+								) {
+									statusBarText.setText("done");
+								} else {
+									statusBarText.setText("checksum mismatch");
+									// TODO: get all checksums; compare; down-sync
+									const res = await api.getChecksums({
+										auth: this.settings.accessToken!,
+										query: {
+											filename: "/",
+										},
+									});
+
+									// Check properties in a
+									for (const key in res.data) {
+										if (
+											!(key in this.checksums.files) ||
+											res.data[key] !==
+												this.checksums.files[key]
+										) {
+											console.log(
+												"changed or new " + key
+											);
+											await downloadFile(this, key);
+										}
+									}
+
+									// Check for properties in b that are missing in a (optional)
+									for (const key in this.checksums.files) {
+										if (!(key in res.data!)) {
+											console.log("deleted " + key);
+											this.app.vault.delete(this.app.vault.getFileByPath(key)!);
+										}
+									}
+								}
 							}, 5000) as any
 						);
 					}
@@ -208,14 +263,29 @@ class AerosolSettingTab extends PluginSettingTab {
 			.setDisabled(this.plugin.settings.connected);
 
 		new Setting(containerEl)
-			.setName("Server Port")
-			.setDesc("The port your Aerosol Server listens on")
+			.setName("Registration Token")
+			.setDesc("The token provided by your server admin")
 			.addText((text) =>
 				text
 					.setPlaceholder("27027")
 					.setValue(this.plugin.settings.serverPort.toString())
 					.onChange(async (value) => {
 						this.plugin.settings.serverPort = Number(value);
+						await this.plugin.saveSettings();
+						this.plugin.events.trigger("settings-changed");
+					})
+			)
+			.setDisabled(this.plugin.settings.connected);
+
+		new Setting(containerEl)
+			.setName("Server Port")
+			.setDesc("The port your Aerosol Server listens on")
+			.addText((text) =>
+				text
+					.setPlaceholder("XXXXX")
+					.setValue(this.plugin.settings.registrationToken)
+					.onChange(async (value) => {
+						this.plugin.settings.registrationToken = value;
 						await this.plugin.saveSettings();
 						this.plugin.events.trigger("settings-changed");
 					})
@@ -259,7 +329,7 @@ async function register(plugin: Aerosol) {
 	try {
 		apiCall = await api.postUser({
 			body: {
-				token: "123",
+				token: plugin.settings.registrationToken,
 				username: "Akira",
 			},
 		});
@@ -311,8 +381,7 @@ async function renewToken(plugin: Aerosol) {
 		plugin.settings.accessToken =
 			apiCall.response.headers.get("Authorization");
 
-		let timeTillRenewal =
-			apiCall.data!.expiresIn! > 70 ? apiCall.data!.expiresIn! - 10 : 60;
+		let timeTillRenewal = apiCall.data!.expiresIn! - 10;
 
 		clearTimeout(plugin.renewalTimeout);
 		plugin.renewalTimeout = setTimeout(
@@ -421,6 +490,86 @@ async function renameFile(plugin: Aerosol, path: string, newPath: string) {
 	}
 
 	if (apiCall.response.status == 200) {
+		new Notice("Sync successfull");
+	} else {
+		new Notice(
+			`Couldn't Sync: ${apiCall.response.status} - ${apiCall.response.statusText}`
+		);
+	}
+}
+
+async function calculateChecksums(plugin: Aerosol) {
+	const files = plugin.app.vault.getFiles();
+	let fileChecksums: Record<string, string> = {};
+	for (const file of files) {
+		fileChecksums[file.path] = SparkMD5.ArrayBuffer.hash(
+			await plugin.app.vault.readBinary(
+				plugin.app.vault.getFileByPath(file.path)!
+			)
+		);
+	}
+	const vaultChecksum = SparkMD5.hash(
+		JSON.stringify(Object.entries(fileChecksums).sort())
+	);
+
+	plugin.checksums = {
+		vault: vaultChecksum,
+		files: fileChecksums,
+	};
+}
+
+async function recalculateChecksums(
+	plugin: Aerosol,
+	path: string,
+	deleted = false
+) {
+	if (deleted) {
+		delete plugin.checksums.files[path];
+	} else {
+		plugin.checksums.files[path] = SparkMD5.ArrayBuffer.hash(
+			await plugin.app.vault.readBinary(
+				plugin.app.vault.getFileByPath(path)!
+			)
+		);
+	}
+	plugin.checksums.vault = SparkMD5.hash(
+		JSON.stringify(Object.entries(plugin.checksums.files).sort())
+	);
+}
+
+async function downloadFile(plugin: Aerosol, path: string) {
+	if (!plugin.settings.accessToken) {
+		new Notice("Couldn't sync - access token not set");
+		return;
+	}
+
+	let apiCall;
+	try {
+		apiCall = await api.getFile({
+			query: {
+				filename: path,
+			},
+			auth: plugin.settings.accessToken,
+		});
+	} catch {
+		new Notice("Couldn't reach the Server");
+		return;
+	}
+
+	if (apiCall.response.status == 200) {
+		const file = plugin.app.vault.getFileByPath(path);
+		if (file) {
+			plugin.app.vault.modifyBinary(
+				file,
+				base64ToArrayBuffer(apiCall.data!.contents!)
+			);
+		} else {
+			plugin.app.vault.createBinary(
+				path,
+				base64ToArrayBuffer(apiCall.data!.contents!)
+			);
+		}
+
 		new Notice("Sync successfull");
 	} else {
 		new Notice(
