@@ -18,8 +18,6 @@ const signing_key = process.env.SIGNING_KEY || "what here?";
 const signing_ttl = Number(process.env.SIGNING_TTL) || 60;
 const swaggerDocument = yaml.load("../openapi3_1.yaml");
 
-app.use(express.json());
-app.use(express.urlencoded());
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use(
   cors({
@@ -79,7 +77,7 @@ app.put("/file", (req: Request, res: Response) => {
   }
 
   // create file / change content
-  fs.writeFile(`${vault_path}/${req.body.filename}`, atob(req.body.contents)).then(() => {
+  fs.writeFile(`${vault_path}/${req.body.filename}`, Buffer.from(req.body.contents, 'base64')).then(() => {
     checksums.recalculateChecksums(vault_path, req.body.filename);
     res.sendStatus(200)
   }).catch((err) => {
