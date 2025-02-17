@@ -6,16 +6,12 @@ import {
 	arrayBufferToBase64,
 	base64ToArrayBuffer,
 	ButtonComponent,
-	Editor,
 	Events,
-	MarkdownView,
-	Modal,
 	Notice,
 	Plugin,
 	PluginSettingTab,
 	setIcon,
 	Setting,
-	TextComponent,
 } from "obsidian";
 import * as SparkMD5 from "spark-md5";
 
