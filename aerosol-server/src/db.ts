@@ -2,14 +2,22 @@ import { Database, open } from "sqlite";
 import sqlite3 from "sqlite3";
 import crypto, { UUID } from "crypto";
 
-const regexFilePathForwardDashes =
-  /^(?:\.\/)?(?:[a-zA-Z0-9_\-]+\/)*[a-zA-Z0-9_\-]+\/?$/;
-const regexFilePathBackwardDashes =
-  /^(?:.\/)?(?:[a-zA-Z0-9-]+\/)*[a-zA-Z0-9-]+.[a-zA-Z0-9]+$/;
-const regexFolderPathBackwardDashes =
-  /^(?:\.\\|)(?:[a-zA-Z0-9_\\-]+\\)*[a-zA-Z0-9_\\-]+\\?$/;
-const regexFolderPathForwardDashes =
-  /^(?:\.\/|)(?:[a-zA-Z0-9_\-]+\/)*[a-zA-Z0-9_\-]+\/?$/;
+const regexFilePathForwardDashes = new RegExp(
+  "^(?:/|./)?(?:[a-zA-Z0-9-\\s]+/)*(?:[a-zA-Z0-9-\\s]+).(?:[a-zA-Z0-9-]+)$",
+  "i"
+);
+const regexFolderPathForwardDashes = new RegExp(
+  "^(?:/|./)?(?:[a-zA-Z0-9-\\s]+/)",
+  "i"
+);
+const regexFilePathBackwardDashes = new RegExp(
+  "^(?:|.)?(?:[a-zA-Z0-9_-\\s]+)(?:[sa-zA-Z0-9-\\s]+).(?:[a-zA-Z0-9-]+)$",
+  "i"
+);
+const regexFolderPathBackwardDashes = new RegExp(
+  "^(?:|.)?(?:[a-zA-Z0-9_-\\s]+)*$",
+  "i"
+);
 
 let DB: null | Database = null;
 
