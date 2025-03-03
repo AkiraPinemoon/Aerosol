@@ -1,6 +1,5 @@
 import * as api from "src/api";
 import { client } from "src/api/client.gen";
-import { next as Automerge } from "@automerge/automerge";
 
 import {
 	App,
