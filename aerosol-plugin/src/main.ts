@@ -1,5 +1,6 @@
 import * as api from "src/api";
 import { client } from "src/api/client.gen";
+import { next as Automerge } from "@automerge/automerge";
 
 import {
 	App,
@@ -543,22 +544,22 @@ async function downloadFile(plugin: Aerosol, path: string) {
 
 async function poll(plugin: Aerosol) {
 	plugin.statusBarText.setText("polling");
-	await renewToken(this);
+	await renewToken(plugin);
 	const res = await api.getChecksum({
-		auth: this.settings.accessToken!.token,
+		auth: plugin.settings.accessToken!.token,
 	});
 	if (res.response.status != 200) {
 		new Notice("Polling error");
 		return;
 	}
 
-	if (res.data!.checksum == this.checksums.vault) {
+	if (res.data!.checksum == plugin.checksums.vault) {
 		plugin.statusBarText.setText("done");
 	} else {
 		plugin.statusBarText.setText("checksum mismatch");
-		await renewToken(this);
+		await renewToken(plugin);
 		const res = await api.getChecksums({
-			auth: this.settings.accessToken!.token,
+			auth: plugin.settings.accessToken!.token,
 			query: {
 				filename: "/",
 			},
@@ -567,19 +568,19 @@ async function poll(plugin: Aerosol) {
 		// Check for new or changed files
 		for (const key in res.data) {
 			if (
-				!(key in this.checksums.files) ||
-				res.data[key] !== this.checksums.files[key]
+				!(key in plugin.checksums.files) ||
+				res.data[key] !== plugin.checksums.files[key]
 			) {
 				console.log("changed or new " + key);
-				await downloadFile(this, key);
+				await downloadFile(plugin, key);
 			}
 		}
 
 		// Check for deleted files
-		for (const key in this.checksums.files) {
+		for (const key in plugin.checksums.files) {
 			if (!(key in res.data!)) {
 				console.log("deleted " + key);
-				this.app.vault.delete(this.app.vault.getFileByPath(key)!);
+				plugin.app.vault.delete(plugin.app.vault.getFileByPath(key)!);
 			}
 		}
 	}
