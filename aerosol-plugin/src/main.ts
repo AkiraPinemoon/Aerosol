@@ -1,27 +1,67 @@
 import {
+	App,
 	arrayBufferToBase64,
 	base64ToArrayBuffer,
+	ButtonComponent,
+	Events,
 	Plugin,
+	PluginSettingTab,
 	setIcon,
+	Setting,
 } from "obsidian";
 import * as Y from "yjs";
 import DiffMatchPatch from "diff-match-patch";
 import { WebsocketProvider } from "y-websocket";
 
+interface AerosolSettings {
+	connected: boolean;
+	serverURL: string;
+	serverPort: number;
+}
+
+const DEFAULT_SETTINGS: AerosolSettings = {
+	connected: false,
+	serverURL: "",
+	serverPort: 27027,
+};
+
+export class AerosolEvents extends Events {
+	constructor() {
+		super();
+	}
+}
+
 export default class Aerosol extends Plugin {
+	settings: AerosolSettings;
+	events: AerosolEvents = new AerosolEvents();
 	doc: Y.Doc;
 	statusBarText: HTMLElement;
 	dmp: DiffMatchPatch = new DiffMatchPatch();
-	wsProvider: WebsocketProvider;
+	wsProvider: WebsocketProvider | null;
+	ownUpdates: Set<string> = new Set();
+	incomingUpdates: Set<string> = new Set();
 
 	async onload() {
 		// init
+
+		await this.loadSettings();
+		// add setting tab
+		this.addSettingTab(new AerosolSettingTab(this.app, this));
+
+		// load ydoc from localstorage
 		this.loadDoc();
-		this.wsProvider = new WebsocketProvider(
-			"ws://8.tcp.ngrok.io:12568",
-			"aerosol-room",
-			this.doc
-		);
+
+		if (this.settings.connected) {
+			// setup websocket connection if possible
+			this.wsProvider = new WebsocketProvider(
+				"ws://" +
+					this.settings.serverURL +
+					":" +
+					this.settings.serverPort,
+				"aerosol-room",
+				this.doc
+			);
+		}
 
 		this.registerEvent(
 			this.doc.on("update", (_) => {
@@ -36,11 +76,17 @@ export default class Aerosol extends Plugin {
 						const current = await this.app.vault.read(existingFile);
 						if (current === content.toString()) return; // no change
 						// update existing file
+						if (this.ownUpdates.has(path)) {
+							this.ownUpdates.delete(path);
+							return; // skip processing if this was our own update
+						}
+						this.incomingUpdates.add(path);
 						await this.app.vault.modify(
 							existingFile,
 							content.toString()
 						);
 					} else {
+						this.incomingUpdates.add(path);
 						await this.app.vault.create(path, content.toString());
 					}
 				});
@@ -52,15 +98,16 @@ export default class Aerosol extends Plugin {
 
 				this.app.vault.getFiles().forEach(async (file) => {
 					if (!trackedFiles.has(file.path)) {
+						this.incomingUpdates.add(file.path);
 						await this.app.vault.delete(file);
 					}
 				});
 			})
 		);
 
-		this.registerEvent(
-			this.wsProvider.on("status", this.updateConnectionStatus)
-		);
+		// this.registerEvent(
+		// 	this.wsProvider.on("status", this.updateConnectionStatus)
+		// );
 
 		// add status bar text
 		this.statusBarText = this.addStatusBarItem();
@@ -73,6 +120,13 @@ export default class Aerosol extends Plugin {
 		// registering of sync events
 		this.registerEvent(
 			this.app.vault.on("create", async (file) => {
+				if (this.incomingUpdates.has(file.path)) {
+					this.incomingUpdates.delete(file.path);
+					return; // skip processing if this was an incoming update
+				}
+
+				this.ownUpdates.add(file.path);
+
 				this.statusBarText.setText("create " + file.path);
 				this.doc.transact(() => {
 					// get the file map
@@ -101,6 +155,13 @@ export default class Aerosol extends Plugin {
 
 		this.registerEvent(
 			this.app.vault.on("delete", async (file) => {
+				if (this.incomingUpdates.has(file.path)) {
+					this.incomingUpdates.delete(file.path);
+					return; // skip processing if this was an incoming update
+				}
+
+				this.ownUpdates.add(file.path);
+
 				this.statusBarText.setText("delete " + file.path);
 				this.doc.transact(() => {
 					// get the file map
@@ -142,6 +203,13 @@ export default class Aerosol extends Plugin {
 
 		this.registerEvent(
 			this.app.workspace.on("editor-change", (editor, info) => {
+				if (this.incomingUpdates.has(info.file?.path!)) {
+					this.incomingUpdates.delete(info.file?.path!);
+					return; // skip processing if this was an incoming update
+				}
+
+				this.ownUpdates.add(info.file?.path!);
+
 				// get the file map
 				const map = this.doc.getMap<Y.Map<any>>("files");
 
@@ -186,6 +254,9 @@ export default class Aerosol extends Plugin {
 
 	async onunload() {
 		this.saveDoc();
+		this.wsProvider?.disconnect();
+		this.wsProvider?.destroy();
+		this.wsProvider = null;
 	}
 
 	loadDoc() {
@@ -204,9 +275,129 @@ export default class Aerosol extends Plugin {
 		);
 	}
 
+	async loadSettings() {
+		this.settings = Object.assign(
+			{},
+			DEFAULT_SETTINGS,
+			await this.loadData()
+		);
+	}
+
+	async saveSettings() {
+		await this.saveData(this.settings);
+	}
+
 	updateConnectionStatus(event: {
 		status: "connected" | "disconnected" | "connecting";
 	}) {
 		console.log("Connection status: " + event.status);
+	}
+}
+
+class AerosolSettingTab extends PluginSettingTab {
+	plugin: Aerosol;
+
+	constructor(app: App, plugin: Aerosol) {
+		super(app, plugin);
+		this.plugin = plugin;
+	}
+
+	display(): void {
+		const { containerEl } = this;
+
+		containerEl.empty();
+
+		new Setting(containerEl).setHeading().setName("Aerosol Setup");
+
+		new Setting(containerEl)
+			.setName("Server URL")
+			.setDesc("The URL your Aerosol Server can be reached at")
+			.addText((text) =>
+				text
+					.setPlaceholder("aerosol.example.net")
+					.setValue(this.plugin.settings.serverURL)
+					.onChange(async (value) => {
+						this.plugin.settings.serverURL = value;
+						await this.plugin.saveSettings();
+						this.plugin.events.trigger("settings-changed");
+					})
+			)
+			.setDisabled(this.plugin.settings.connected);
+
+		new Setting(containerEl)
+			.setName("Server Port")
+			.setDesc("The token provided by your server admin")
+			.addText((text) =>
+				text
+					.setPlaceholder("27027")
+					.setValue(this.plugin.settings.serverPort.toString())
+					.onChange(async (value) => {
+						this.plugin.settings.serverPort = Number(value);
+						await this.plugin.saveSettings();
+						this.plugin.events.trigger("settings-changed");
+					})
+			)
+			.setDisabled(this.plugin.settings.connected);
+
+		if (this.plugin.settings.connected) {
+			new Setting(containerEl)
+				.setName("Disconnect")
+				.setDesc(
+					"After disconnecting your Vault won't be synced and backed up until you connect again!"
+				)
+				.addButton((button: ButtonComponent) => {
+					button.setWarning();
+					button.setIcon("log-out");
+					button.onClick(async (event: MouseEvent) => {
+						// TODO: disconnect logic
+						this.plugin.wsProvider?.disconnect();
+						this.plugin.wsProvider?.destroy();
+						this.plugin.wsProvider = null;
+						this.plugin.settings.connected = false;
+						await this.plugin.saveSettings();
+
+						this.display();
+					});
+				});
+		} else {
+			new Setting(containerEl)
+				.setName("Connect")
+				.setDesc(
+					"Connecting will setup your connection to the Server and begin syncing you data (THIS WILL DELETE ANY CURRENT FILES IN THE VAULT)"
+				)
+				.addButton((button: ButtonComponent) => {
+					button.setIcon("log-in");
+					button.onClick(async (event: MouseEvent) => {
+						// TODO: connect logic
+						// clear vault
+						for (const file of this.plugin.app.vault.getFiles()) {
+							await this.plugin.app.vault.delete(file);
+						}
+
+						// reset doc
+						this.plugin.doc.destroy();
+						this.plugin.doc = new Y.Doc();
+						this.plugin.saveDoc();
+
+						// setup websocket connection if possible
+						if (
+							this.plugin.settings.serverURL &&
+							this.plugin.settings.serverPort
+						)
+							this.plugin.wsProvider = new WebsocketProvider(
+								"ws://" +
+									this.plugin.settings.serverURL +
+									":" +
+									this.plugin.settings.serverPort,
+								"aerosol-room",
+								this.plugin.doc
+							);
+						this.plugin.settings.connected = true;
+						await this.plugin.saveSettings();
+
+						this.display();
+					});
+				});
+		}
 	}
 }
