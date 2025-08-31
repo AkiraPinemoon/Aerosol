@@ -26,6 +26,9 @@
 	},
 	"dependencies": {
 		"@hey-api/client-fetch": "^0.8.1",
-		"spark-md5": "^3.0.2"
+		"diff-match-patch": "^1.0.5",
+		"spark-md5": "^3.0.2",
+		"y-websocket": "^3.0.0",
+		"yjs": "^13.6.27"
 	}
 }

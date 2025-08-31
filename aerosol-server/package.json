@@ -6,19 +6,25 @@
   "scripts": {
     "build": "npx tsc",
     "start": "node dist/index.js",
-    "dev": "nodemon src/index.ts"
+    "dev": "node src/index.js"
   },
   "author": "Akira Pinemoon",
   "license": "MIT",
   "dependencies": {
+    "@y/websocket-server": "^0.1.1",
     "cors": "^2.8.5",
+    "diff-match-patch": "^1.0.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "spark-md5": "^3.0.2",
     "jsonwebtoken": "^9.0.2",
+    "lib0": "^0.2.114",
+    "spark-md5": "^3.0.2",
     "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7",
-    "yamljs": "^0.3.0"
+    "ws": "^8.18.3",
+    "y-websocket": "^3.0.0",
+    "yamljs": "^0.3.0",
+    "yjs": "^13.6.27"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
@@ -26,6 +32,7 @@
     "@types/node": "^22.13.1",
     "@types/spark-md5": "^3.0.5",
     "@types/swagger-ui-express": "^4.1.7",
+    "@types/ws": "^8.18.1",
     "@types/yamljs": "^0.2.34",
     "nodemon": "^3.1.9",
     "swagger-ui-express": "^5.0.1",
